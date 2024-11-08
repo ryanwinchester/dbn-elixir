@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+cd .git/modules/test/support/databento/dbn
+git config core.sparseCheckout true
+echo "tests/data" > info/sparse-checkout
+git read-tree -mu HEAD

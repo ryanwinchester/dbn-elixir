@@ -1,0 +1,82 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: Test
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: ["ubuntu-24.04"]
+        elixir: ["1.17.x"]
+        otp: ["27.x"]
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+          fetch-depth: 0
+
+      - name: Configure sparse checkout for submodule
+        run: ./configure_submodule
+
+      - name: Set up Elixir
+        uses: erlef/setup-beam@v1
+        with:
+          otp-version: ${{ matrix.otp }}
+          elixir-version: ${{ matrix.elixir }}
+
+      - name: Cache compiled build
+        id: cache-build
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-compiled-build
+        with:
+          path: _build
+          key: ${{env.cache-name}}-${{matrix.os}}-${{matrix.elixir}}-${{matrix.otp}}-${{ hashFiles('lib/**/*.ex') }}
+          restore-keys: |
+            ${{env.cache-name}}-${{matrix.os}}-${{matrix.elixir}}-${{matrix.otp}}-
+
+      - name: Cache deps
+        id: cache-deps
+        uses: actions/cache@v4
+        env:
+          cache-name: cache-elixir-deps
+        with:
+          path: deps
+          key: ${{env.cache-name}}-${{matrix.os}}-${{matrix.elixir}}-${{matrix.otp}}-${{ hashFiles('**/mix.lock') }}
+          restore-keys: |
+            ${{env.cache-name}}-${{matrix.os}}-${{matrix.elixir}}-${{matrix.otp}}-
+
+      - name: Install dependencies
+        run: mix deps.get
+
+      - name: Compiles dev env without warnings
+        run: mix compile --warnings-as-errors
+
+      - name: Compiles test env
+        run: mix compile
+        env:
+          MIX_ENV: test
+
+      - name: Check Formatting
+        run: mix format --check-formatted
+
+      - name: Check for unused deps
+        run: mix deps.unlock --check-unused
+
+      - name: Check for retired deps
+        run: mix hex.audit
+
+      - name: Run tests
+        run: mix test
