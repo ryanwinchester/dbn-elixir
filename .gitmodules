@@ -1,0 +1,3 @@
+[submodule "test/support/databento/dbn"]
+	path = test/support/databento/dbn
+	url = git@github.com:databento/dbn.git
