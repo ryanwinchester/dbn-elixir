@@ -8,6 +8,7 @@ defmodule DBN.Metadata do
     :version,
     :dataset,
     :schema,
+    :schema_definition,
     :start,
     :end,
     :limit,
