@@ -15,9 +15,9 @@ defmodule DBN.Metadata do
     :stype_in,
     :stype_out,
     :ts_out,
-    :symbols,
-    :partial,
-    :not_found,
-    :mappings
+    symbols: [],
+    partial: [],
+    not_found: [],
+    mappings: []
   ]
 end
